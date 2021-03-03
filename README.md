@@ -1,8 +1,6 @@
 # <img src="https://github.com/sbraconnier/jodconverter/wiki/images/jodconverter_w200.png">&nbsp;<sup>&nbsp;LibreOffice</sup>&nbsp;/&nbsp;<sub>Apache OpenOffice</sub>
 
 [![Build Status](https://api.cirrus-ci.com/github/sbraconnier/jodconverter.svg)](https://cirrus-ci.com/github/sbraconnier/jodconverter)
-[![Build status](https://ci.appveyor.com/api/projects/status/mvn8oqr2m8xorslk?svg=true)](https://ci.appveyor.com/project/sbraconnier/jodconverter)
-[![Build Status](https://travis-ci.org/sbraconnier/jodconverter.svg?branch=master)](https://travis-ci.org/sbraconnier/jodconverter)
 [![Coverage Status](https://coveralls.io/repos/github/sbraconnier/jodconverter/badge.svg?branch=master)](https://coveralls.io/github/sbraconnier/jodconverter?branch=master)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/20f3adafce26439fb6f38a7767388944)](https://www.codacy.com/app/sbraconnier/jodconverter?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=sbraconnier/jodconverter&amp;utm_campaign=Badge_Grade)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
@@ -27,7 +25,7 @@ I created this fork years ago because I had to do some changes to the original p
 
 #### Gradle:
 ```Shell
-compile 'org.jodconverter:jodconverter-local:4.3.0'
+compile 'org.jodconverter:jodconverter-local:4.4.2'
 ```
 
 #### Maven:
@@ -35,13 +33,13 @@ compile 'org.jodconverter:jodconverter-local:4.3.0'
 <dependency>
   <groupId>org.jodconverter</groupId>
   <artifactId>jodconverter-local</artifactId>
-  <version>4.3.0</version>
+  <version>4.4.2</version>
 </dependency>
 ```
 
 ### Building the Project
 
-Build default, JODConverter is built using the OpenOffice libraries. See [here](https://github.com/sbraconnier/jodconverter/issues/113) to know why. Bu you can build the project using the LibreOffice libraries with the `useLibreOffice` argument.
+Build default, JODConverter is built using the OpenOffice libraries. See [here](https://github.com/sbraconnier/jodconverter/issues/113) to know why. But you can build the project using the LibreOffice libraries with the `useLibreOffice` argument.
 
 #### With OpenOffice libraries:
 ```Shell
@@ -80,7 +78,7 @@ Here are my favorite/inspiration forks/projects:
 - [Nuxeo fork](https://github.com/nuxeo/jodconverter): Nice choice if you don't want to use SIGAR and don't came across an unresponsive office process following a timeout exception that drives you crazy.
 - [documents4j project](https://github.com/documents4j/documents4j): Nice choice if you want 100% perfect conversion using MS Office. But work only on Windows out of the box (Local implementation) and not totally free (since MS Office is not free). The new "job" package is strongly inspired by this project.
 
-### A special thanks to:
+### :sparkles: A special thanks to :
 
 [@michelole](https://github.com/michelole) who created a pull request in these two forks with a [stress test](https://github.com/sbraconnier/jodconverter/blob/master/jodconverter-local/src/integTest/java/org/jodconverter/StressITest.java) that made my office process to crash every times! My first commit was when I was able to build my things with his stress test on!!  
 
@@ -93,6 +91,6 @@ including some [wiki pages](https://code.google.com/archive/p/jodconverter/wikis
 
 ## Donations
 
-If this project helps you, please consider a donation. I have to pay for the jodconverter web site (domain and hosting) every year. I also sit on my chair in front of a monitor a lot instead of being outside drinking a beer to improve this project :smiley:. Thanks!! :heart:
+If this project helps you, please consider a donation. I have to pay for the jodconverter web site (domain and hosting) every year. I also sit on my chair in front of a monitor a lot instead of being outside drinking a :beer: to improve this project :smiley:. Thanks!! :heart:
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XUYFM5NLLK628)

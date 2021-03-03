@@ -51,71 +51,6 @@ public final class Info { // NOPMD - Disable utility class name rule violation
   private static final String[] NODE_PATHS = {NODE_PRODUCT, NODE_L10N};
 
   /**
-   * Gets whether the specified context is for an OpenOffice installation.
-   *
-   * @param context The context.
-   * @return {@code true} if the specified context is for an OpenOffice installation, {@code false}
-   *     otherwise.
-   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
-   *     the {@link WrappedUnoException}.
-   */
-  public static boolean isOpenOffice(@NonNull final XComponentContext context) {
-    return "openoffice".equalsIgnoreCase(getOfficeName(context));
-  }
-
-  /**
-   * Gets whether the specified context is for a LibreOffice installation.
-   *
-   * @param context The context.
-   * @return {@code true} if the specified context is for an LibreOffice installation, {@code false}
-   *     otherwise.
-   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
-   *     the {@link WrappedUnoException}.
-   */
-  public static boolean isLibreOffice(@NonNull final XComponentContext context) {
-    return "libreoffice".equalsIgnoreCase(getOfficeName(context));
-  }
-
-  /**
-   * Gets the office product name for the given context.
-   *
-   * @param context The context.
-   * @return The office product name, or {@code null} if it could not be retrieved.
-   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
-   *     the {@link WrappedUnoException}.
-   */
-  @Nullable
-  public static String getOfficeName(@NonNull final XComponentContext context) {
-    return getConfig(context, "ooName");
-  }
-
-  /**
-   * Gets the office product version (long representation) for the given context, e.g 6.1.0.3
-   *
-   * @param context The context.
-   * @return The office product version, or {@code null} if it could not be retrieved.
-   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
-   *     the {@link WrappedUnoException}.
-   */
-  @Nullable
-  public static String getOfficeVersionLong(@NonNull final XComponentContext context) {
-    return getConfig(context, "ooSetupVersionAboutBox");
-  }
-
-  /**
-   * Gets the office product version (short representation) for the given context, e.g 6.1
-   *
-   * @param context The context.
-   * @return The office product version, or {@code null} if it could not be retrieved.
-   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
-   *     the {@link WrappedUnoException}.
-   */
-  @Nullable
-  public static String getOfficeVersionShort(@NonNull final XComponentContext context) {
-    return getConfig(context, "ooSetupVersion");
-  }
-
-  /**
    * Compares two versions strings (ex. 1.6.1).
    *
    * @param version1 The first version to compare.
@@ -124,7 +59,7 @@ public final class Info { // NOPMD - Disable utility class name rule violation
    * @return -1 if version1 &lt; version2, 1 if version1 &gt; version2, 0 if version1 = version2.
    */
   public static int compareVersions(
-      @Nullable final String version1, @Nullable final String version2, final int length) {
+      final @Nullable String version1, final @Nullable String version2, final int length) {
 
     if (version1 == null && version2 == null) {
       return 0;
@@ -149,17 +84,77 @@ public final class Info { // NOPMD - Disable utility class name rule violation
   }
 
   /**
-   * Normalizes a version string so that it has 'length' number of version numbers separated by '.'
+   * Gets whether the given document is of the given document type.
+   *
+   * @param document The document.
+   * @param documentType The document type to check.
+   * @return {@code true} if the document is of the specified type, {@code true} otherwise.
    */
-  @NonNull
-  private static String normalizeVersion(@NonNull final String version, final int length) {
+  public static boolean isDocumentType(
+      final @NonNull XComponent document, final @NonNull String documentType) {
+    return Lo.qi(XServiceInfo.class, document).supportsService(documentType);
+  }
 
-    final List<String> numbers = new ArrayList<>(Arrays.asList(version.split("\\.")));
-    while (numbers.size() < length) {
-      numbers.add("0");
-    }
+  /**
+   * Gets whether the specified context is for an OpenOffice installation.
+   *
+   * @param context The context.
+   * @return {@code true} if the specified context is for an OpenOffice installation, {@code false}
+   *     otherwise.
+   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
+   *     the {@link WrappedUnoException}.
+   */
+  public static boolean isOpenOffice(final @NonNull XComponentContext context) {
+    return "openoffice".equalsIgnoreCase(getOfficeName(context));
+  }
 
-    return String.join(".", numbers);
+  /**
+   * Gets whether the specified context is for a LibreOffice installation.
+   *
+   * @param context The context.
+   * @return {@code true} if the specified context is for an LibreOffice installation, {@code false}
+   *     otherwise.
+   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
+   *     the {@link WrappedUnoException}.
+   */
+  public static boolean isLibreOffice(final @NonNull XComponentContext context) {
+    return "libreoffice".equalsIgnoreCase(getOfficeName(context));
+  }
+
+  /**
+   * Gets the office product name for the given context.
+   *
+   * @param context The context.
+   * @return The office product name, or {@code null} if it could not be retrieved.
+   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
+   *     the {@link WrappedUnoException}.
+   */
+  public static @Nullable String getOfficeName(final @NonNull XComponentContext context) {
+    return getConfig(context, "ooName");
+  }
+
+  /**
+   * Gets the office product version (long representation) for the given context, e.g 6.1.0.3
+   *
+   * @param context The context.
+   * @return The office product version, or {@code null} if it could not be retrieved.
+   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
+   *     the {@link WrappedUnoException}.
+   */
+  public static @Nullable String getOfficeVersionLong(final @NonNull XComponentContext context) {
+    return getConfig(context, "ooSetupVersionAboutBox");
+  }
+
+  /**
+   * Gets the office product version (short representation) for the given context, e.g 6.1
+   *
+   * @param context The context.
+   * @return The office product version, or {@code null} if it could not be retrieved.
+   * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
+   *     the {@link WrappedUnoException}.
+   */
+  public static @Nullable String getOfficeVersionShort(final @NonNull XComponentContext context) {
+    return getConfig(context, "ooSetupVersion");
   }
 
   /**
@@ -171,9 +166,8 @@ public final class Info { // NOPMD - Disable utility class name rule violation
    * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
    *     the {@link WrappedUnoException}.
    */
-  @Nullable
-  public static String getConfig(
-      @NonNull final XComponentContext context, @NonNull final String propName) {
+  public static @Nullable String getConfig(
+      final @NonNull XComponentContext context, final @NonNull String propName) {
 
     for (final String nodePath : NODE_PATHS) {
       final Object info = getConfig(context, nodePath, propName);
@@ -194,11 +188,10 @@ public final class Info { // NOPMD - Disable utility class name rule violation
    * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
    *     the {@link WrappedUnoException}.
    */
-  @Nullable
-  public static Object getConfig(
-      @NonNull final XComponentContext context,
-      @NonNull final String nodePath,
-      @NonNull final String propName) {
+  public static @Nullable Object getConfig(
+      final @NonNull XComponentContext context,
+      final @NonNull String nodePath,
+      final @NonNull String propName) {
     final XPropertySet set = getConfigProperties(context, nodePath);
     if (set == null) {
       return null;
@@ -207,22 +200,27 @@ public final class Info { // NOPMD - Disable utility class name rule violation
   }
 
   /**
-   * Gets the configuration provider for the given context.
+   * Gets the configuration properties for the specified path.
    *
    * @param context The main context.
-   * @return The {@link XMultiServiceFactory} service, or null if not available.
+   * @param nodePath The path for which the properties are get.
+   * @return A {@link XPropertySet} containing the configuration properties for the specified path,
+   *     or null if not found.
    */
-  @Nullable
-  public static XMultiServiceFactory getConfigProvider(@NonNull final XComponentContext context) {
-    return Lo.createInstanceMCF(
-        context, XMultiServiceFactory.class, "com.sun.star.configuration.ConfigurationProvider");
+  public static @Nullable XPropertySet getConfigProperties(
+      final @NonNull XComponentContext context, final @NonNull String nodePath) {
+
+    final Object configAccess = getConfigAccess(context, nodePath);
+    if (configAccess == null) {
+      LOGGER.debug("Could not create configuration access service");
+      return null;
+    }
+
+    return Lo.qi(XPropertySet.class, configAccess);
   }
 
-  @Nullable
   private static Object getConfigAccess(
-      @NonNull final XComponentContext context,
-      @NonNull final String serviceSpecifier,
-      @NonNull final String nodePath) {
+      final XComponentContext context, final String serviceSpecifier, final String nodePath) {
 
     final XMultiServiceFactory provider = getConfigProvider(context);
     if (provider == null) {
@@ -248,9 +246,8 @@ public final class Info { // NOPMD - Disable utility class name rule violation
    * @param nodePath The path for which the configuration access is get.
    * @return The read-only configuration access service, or null if not available.
    */
-  @Nullable
-  public static Object getConfigAccess(
-      @NonNull final XComponentContext context, @NonNull final String nodePath) {
+  public static @Nullable Object getConfigAccess(
+      final @NonNull XComponentContext context, final @NonNull String nodePath) {
     return getConfigAccess(context, "com.sun.star.configuration.ConfigurationAccess", nodePath);
   }
 
@@ -261,44 +258,35 @@ public final class Info { // NOPMD - Disable utility class name rule violation
    * @param nodePath The path for which the configuration access is get.
    * @return The updatable configuration access service, or null if not available.
    */
-  @Nullable
-  public static Object getConfigUpdateAccess(
-      @NonNull final XComponentContext context, @NonNull final String nodePath) {
+  public static @Nullable Object getConfigUpdateAccess(
+      final @NonNull XComponentContext context, final @NonNull String nodePath) {
     return getConfigAccess(
         context, "com.sun.star.configuration.ConfigurationUpdateAccess", nodePath);
   }
 
   /**
-   * Gets the configuration properties for the specified path.
-   *
-   * @param context The main context.
-   * @param nodePath The path for which the properties are get.
-   * @return A {@link XPropertySet} containing the configuration properties for the specified path,
-   *     or null if not found.
+   * Normalizes a version string so that it has 'length' number of version numbers separated by '.'
    */
-  @Nullable
-  public static XPropertySet getConfigProperties(
-      @NonNull final XComponentContext context, @NonNull final String nodePath) {
+  private static @NonNull String normalizeVersion(final @NonNull String version, final int length) {
 
-    final Object configAccess = getConfigAccess(context, nodePath);
-    if (configAccess == null) {
-      LOGGER.debug("Could not create configuration access service");
-      return null;
+    final List<String> numbers = new ArrayList<>(Arrays.asList(version.split("\\.")));
+    while (numbers.size() < length) {
+      numbers.add("0");
     }
 
-    return Lo.qi(XPropertySet.class, configAccess);
+    return String.join(".", numbers);
   }
 
   /**
-   * Gets whether the given document is of the given document type.
+   * Gets the configuration provider for the given context.
    *
-   * @param document The document.
-   * @param documentType The document type to check.
-   * @return {@code true} if the document is of the specified type, {@code true} otherwise.
+   * @param context The main context.
+   * @return The {@link XMultiServiceFactory} service, or null if not available.
    */
-  public static boolean isDocumentType(
-      @NonNull final XComponent document, @NonNull final String documentType) {
-    return Lo.qi(XServiceInfo.class, document).supportsService(documentType);
+  private static @Nullable XMultiServiceFactory getConfigProvider(
+      final @NonNull XComponentContext context) {
+    return Lo.createInstanceMCF(
+        context, XMultiServiceFactory.class, "com.sun.star.configuration.ConfigurationProvider");
   }
 
   // Suppresses default constructor, ensuring non-instantiability.

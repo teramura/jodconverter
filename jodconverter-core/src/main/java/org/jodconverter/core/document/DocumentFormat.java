@@ -19,16 +19,17 @@
 
 package org.jodconverter.core.document;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -38,19 +39,46 @@ import org.jodconverter.core.util.AssertUtils;
 public class DocumentFormat {
 
   private final String name;
+  // Be backward compatible. Former json file doesn't support multiple document format extensions.
+  @SerializedName(
+      value = "extensions",
+      alternate = {"extension"})
+  @JsonAdapter(ExtensionsAdapter.class)
   private final List<String> extensions;
+
   private final String mediaType;
   private final DocumentFamily inputFamily;
   private final Map<String, Object> loadProperties;
+  // Be backward compatible. storePropertiesByFamily has been renamed storeProperties
+  @SerializedName(
+      value = "storeProperties",
+      alternate = {"storePropertiesByFamily"})
   private final Map<DocumentFamily, Map<String, Object>> storeProperties;
+
+  /**
+   * Special adapter used to support backward compatibility when loading a document format json
+   * file. Former json file doesn't support multiple document format extensions.
+   */
+  private static class ExtensionsAdapter implements JsonDeserializer<List<String>> {
+
+    @Override
+    public List<String> deserialize(
+        final JsonElement json, final Type type, final JsonDeserializationContext cxt) {
+
+      if (json.isJsonArray()) {
+        final Type listType = new TypeToken<List<String>>() {}.getType();
+        return cxt.deserialize(json, listType);
+      }
+      return Stream.of(json.getAsString()).collect(Collectors.toList());
+    }
+  }
 
   /**
    * Creates a new builder instance.
    *
    * @return A new builder instance.
    */
-  @NonNull
-  public static Builder builder() {
+  public static @NonNull Builder builder() {
     return new Builder();
   }
 
@@ -61,8 +89,7 @@ public class DocumentFormat {
    * @return A {@link DocumentFormat}, which will be modifiable, unlike the default document formats
    *     are.
    */
-  @NonNull
-  public static DocumentFormat copy(@NonNull final DocumentFormat sourceFormat) {
+  public static @NonNull DocumentFormat copy(final @NonNull DocumentFormat sourceFormat) {
     return new Builder().from(sourceFormat).unmodifiable(false).build();
   }
 
@@ -73,8 +100,8 @@ public class DocumentFormat {
    * @return A {@link DocumentFormat}, which will be unmodifiable, like the default document formats
    *     are.
    */
-  @NonNull
-  public static DocumentFormat unmodifiableCopy(@NonNull final DocumentFormat sourceFormat) {
+  public static @NonNull DocumentFormat unmodifiableCopy(
+      final @NonNull DocumentFormat sourceFormat) {
     return new Builder().from(sourceFormat).unmodifiable(true).build();
   }
 
@@ -103,7 +130,6 @@ public class DocumentFormat {
     AssertUtils.notBlank(name, "name must not be null nor blank");
     AssertUtils.notNull(extensions, "extensions must not be null");
     AssertUtils.notBlank(mediaType, "mediaType must not be null nor blank");
-    AssertUtils.notNull(inputFamily, "inputFamily must not be null");
 
     this.name = name;
     this.extensions = new ArrayList<>(extensions);
@@ -139,8 +165,7 @@ public class DocumentFormat {
    *
    * @return A string that represents an extension.
    */
-  @NonNull
-  public String getExtension() {
+  public @NonNull String getExtension() {
     return extensions.get(0);
   }
 
@@ -149,8 +174,7 @@ public class DocumentFormat {
    *
    * @return A list of string that represents the extensions.
    */
-  @NonNull
-  public List<@NonNull String> getExtensions() {
+  public @NonNull List<@NonNull String> getExtensions() {
     return extensions;
   }
 
@@ -159,8 +183,7 @@ public class DocumentFormat {
    *
    * @return The input DocumentFamily of the document format.
    */
-  @NonNull
-  public DocumentFamily getInputFamily() {
+  public @Nullable DocumentFamily getInputFamily() {
     return inputFamily;
   }
 
@@ -169,8 +192,7 @@ public class DocumentFormat {
    *
    * @return A map containing the properties to apply when loading a document of this format.
    */
-  @Nullable
-  public Map<@NonNull String, @NonNull Object> getLoadProperties() {
+  public @Nullable Map<@NonNull String, @NonNull Object> getLoadProperties() {
     return loadProperties;
   }
 
@@ -179,8 +201,7 @@ public class DocumentFormat {
    *
    * @return A string that represents the media type.
    */
-  @NonNull
-  public String getMediaType() {
+  public @NonNull String getMediaType() {
     return mediaType;
   }
 
@@ -189,8 +210,7 @@ public class DocumentFormat {
    *
    * @return A string that represents the name of the format.
    */
-  @NonNull
-  public String getName() {
+  public @NonNull String getName() {
     return name;
   }
 
@@ -201,8 +221,7 @@ public class DocumentFormat {
    * @return A DocumentFamily/Map pairs containing the properties to apply when storing a document
    *     of this format, by DocumentFamily.
    */
-  @Nullable
-  public Map<@NonNull DocumentFamily, @NonNull Map<@NonNull String, @NonNull Object>>
+  public @Nullable Map<@NonNull DocumentFamily, @NonNull Map<@NonNull String, @NonNull Object>>
       getStoreProperties() {
     return storeProperties;
   }
@@ -214,16 +233,14 @@ public class DocumentFormat {
    * @param family The DocumentFamily for which the properties are get.
    * @return A map containing the properties to apply when storing a document to this format.
    */
-  @Nullable
-  public Map<@NonNull String, @NonNull Object> getStoreProperties(
+  public @Nullable Map<@NonNull String, @NonNull Object> getStoreProperties(
       @NonNull final DocumentFamily family) {
 
     return storeProperties == null ? null : storeProperties.get(family);
   }
 
-  @NonNull
   @Override
-  public String toString() {
+  public @NonNull String toString() {
     return getClass().getSimpleName()
         + "{"
         + "name=\""
@@ -322,13 +339,12 @@ public class DocumentFormat {
      * Specifies the input (when a document is loaded) DocumentFamily associated with the document
      * format.
      *
-     * @param inputFamily The DocumentFamily, cannot be null.
+     * @param inputFamily The DocumentFamily, may be null.
      * @return This builder instance.
      */
     @NonNull
-    public Builder inputFamily(@NonNull final DocumentFamily inputFamily) {
+    public Builder inputFamily(@Nullable final DocumentFamily inputFamily) {
 
-      AssertUtils.notNull(inputFamily, "inputFamily must not be null");
       this.inputFamily = inputFamily;
       return this;
     }
@@ -343,7 +359,7 @@ public class DocumentFormat {
      * @return This builder instance.
      */
     @NonNull
-    public Builder loadProperty(@NonNull final String name, @Nullable final Object value) {
+    public Builder loadProperty(@NonNull final String name, final @Nullable Object value) {
 
       AssertUtils.notBlank(name, "name must not be null nor blank");
 
@@ -423,7 +439,7 @@ public class DocumentFormat {
     public Builder storeProperty(
         @NonNull final DocumentFamily documentFamily,
         @NonNull final String name,
-        @Nullable final Object value) {
+        final @Nullable Object value) {
 
       AssertUtils.notNull(documentFamily, "documentFamily must not be null");
       AssertUtils.notBlank(name, "name must not be null nor blank");

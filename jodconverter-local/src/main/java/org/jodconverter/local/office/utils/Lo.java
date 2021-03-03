@@ -24,7 +24,6 @@ import java.util.Optional;
 import com.sun.star.lang.XComponent;
 import com.sun.star.lang.XMultiServiceFactory;
 import com.sun.star.uno.Exception;
-import com.sun.star.uno.UnoRuntime;
 import com.sun.star.uno.XComponentContext;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -40,6 +39,8 @@ import org.jodconverter.core.util.AssertUtils;
 public final class Lo { // NOPMD - Disable utility class name rule violation
 
   // Document types service names
+  // NOTE: a GenericTextDocument is either a TextDocument, a WebDocument, or a GlobalDocument
+  // but this further distinction doesn't seem to matter for conversions
   // public static final String WRITER_SERVICE = "com.sun.star.text.TextDocument";
   public static final String WRITER_SERVICE = "com.sun.star.text.GenericTextDocument";
   public static final String CALC_SERVICE = "com.sun.star.sheet.SpreadsheetDocument";
@@ -57,13 +58,12 @@ public final class Lo { // NOPMD - Disable utility class name rule violation
    * @return A reference to the requested UNO interface type.
    * @see UnoRuntime#queryInterface(Class, Object)
    */
-  @NonNull
-  public static <T> T qi(@NonNull final Class<T> type, @NonNull final Object object) {
+  public static <T> @NonNull T qi(final @NonNull Class<T> type, final @NonNull Object object) {
 
     AssertUtils.notNull(type, "type must not be null");
     AssertUtils.notNull(type, "object must not be null");
 
-    final T obj = UnoRuntime.queryInterface(type, object);
+    final T obj = UnoRuntime.getInstance().queryInterface(type, object);
 
     AssertUtils.notNull(
         obj,
@@ -85,11 +85,10 @@ public final class Lo { // NOPMD - Disable utility class name rule violation
    * @return A reference to the requested UNO interface type if available, otherwise {@code null}.
    * @see UnoRuntime#queryInterface(Class, Object)
    */
-  @NonNull
-  public static <T> Optional<T> qiOptional(
-      @NonNull final Class<T> type, @NonNull final Object object) {
+  public static <T> @NonNull Optional<T> qiOptional(
+      final @NonNull Class<T> type, final @NonNull Object object) {
 
-    return Optional.ofNullable(UnoRuntime.queryInterface(type, object));
+    return Optional.ofNullable(UnoRuntime.getInstance().queryInterface(type, object));
   }
 
   /**
@@ -98,8 +97,8 @@ public final class Lo { // NOPMD - Disable utility class name rule violation
    * @param component The component.
    * @return The service factory.
    */
-  @NonNull
-  public static XMultiServiceFactory getServiceFactory(@NonNull final XComponent component) {
+  public static @NonNull XMultiServiceFactory getServiceFactory(
+      final @NonNull XComponent component) {
     return qi(XMultiServiceFactory.class, component);
   }
 
@@ -115,11 +114,10 @@ public final class Lo { // NOPMD - Disable utility class name rule violation
    * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
    *     the {@link WrappedUnoException}.
    */
-  @NonNull
-  public static <T> T createInstanceMSF(
-      @NonNull final XComponent component,
-      @NonNull final Class<T> type,
-      @NonNull final String serviceName) {
+  public static <T> @NonNull T createInstanceMSF(
+      final @NonNull XComponent component,
+      final @NonNull Class<T> type,
+      final @NonNull String serviceName) {
 
     // Create service component using the specified factory.
     // Then uses bridge to obtain proxy to remote interface inside service;
@@ -139,11 +137,10 @@ public final class Lo { // NOPMD - Disable utility class name rule violation
    * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
    *     the {@link WrappedUnoException}.
    */
-  @NonNull
-  public static <T> T createInstanceMSF(
-      @NonNull final XMultiServiceFactory factory,
-      @NonNull final Class<T> type,
-      @NonNull final String serviceName) {
+  public static <T> @NonNull T createInstanceMSF(
+      final @NonNull XMultiServiceFactory factory,
+      final @NonNull Class<T> type,
+      final @NonNull String serviceName) {
 
     // Create service component using the specified factory.
     // Then uses bridge to obtain proxy to remote interface inside service;
@@ -167,11 +164,10 @@ public final class Lo { // NOPMD - Disable utility class name rule violation
    * @throws WrappedUnoException If an UNO exception occurs. The UNO exception will be the cause of
    *     the {@link WrappedUnoException}.
    */
-  @Nullable
-  public static <T> T createInstanceMCF(
-      @NonNull final XComponentContext context,
-      @NonNull final Class<T> type,
-      @NonNull final String serviceName) {
+  public static <T> @Nullable T createInstanceMCF(
+      final @NonNull XComponentContext context,
+      final @NonNull Class<T> type,
+      final @NonNull String serviceName) {
 
     // Create service component using the specified component context.
     // Then uses bridge to obtain proxy to remote interface inside service;

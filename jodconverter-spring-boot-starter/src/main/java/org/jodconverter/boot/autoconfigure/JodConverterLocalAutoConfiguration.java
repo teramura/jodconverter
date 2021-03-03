@@ -57,25 +57,30 @@ public class JodConverterLocalAutoConfiguration {
    *
    * @param properties The local properties.
    */
-  public JodConverterLocalAutoConfiguration(@NonNull final JodConverterLocalProperties properties) {
+  public JodConverterLocalAutoConfiguration(final @NonNull JodConverterLocalProperties properties) {
     this.properties = properties;
   }
 
   // Creates the OfficeManager bean.
   private OfficeManager createOfficeManager(final ProcessManager processManager) {
 
-    final LocalOfficeManager.Builder builder = LocalOfficeManager.builder();
-
-    builder.portNumbers(properties.getPortNumbers());
-    builder.officeHome(properties.getOfficeHome());
-    builder.workingDir(properties.getWorkingDir());
-    builder.templateProfileDir(properties.getTemplateProfileDir());
-    builder.killExistingProcess(properties.isKillExistingProcess());
-    builder.processTimeout(properties.getProcessTimeout());
-    builder.processRetryInterval(properties.getProcessRetryInterval());
-    builder.taskExecutionTimeout(properties.getTaskExecutionTimeout());
-    builder.maxTasksPerProcess(properties.getMaxTasksPerProcess());
-    builder.taskQueueTimeout(properties.getTaskQueueTimeout());
+    final LocalOfficeManager.Builder builder =
+        LocalOfficeManager.builder()
+            .officeHome(properties.getOfficeHome())
+            .hostName(properties.getHostName())
+            .portNumbers(properties.getPortNumbers())
+            .workingDir(properties.getWorkingDir())
+            .templateProfileDir(properties.getTemplateProfileDir())
+            .existingProcessAction(properties.getExistingProcessAction())
+            .processTimeout(properties.getProcessTimeout())
+            .processRetryInterval(properties.getProcessRetryInterval())
+            .afterStartProcessDelay(properties.getAfterStartProcessDelay())
+            .disableOpengl(properties.isDisableOpengl())
+            .startFailFast(properties.isStartFailFast())
+            .keepAliveOnShutdown(properties.isKeepAliveOnShutdown())
+            .taskQueueTimeout(properties.getTaskQueueTimeout())
+            .taskExecutionTimeout(properties.getTaskExecutionTimeout())
+            .maxTasksPerProcess(properties.getMaxTasksPerProcess());
     if (StringUtils.isBlank(properties.getProcessManagerClass())) {
       builder.processManager(processManager);
     } else {
@@ -99,11 +104,9 @@ public class JodConverterLocalAutoConfiguration {
 
     try (InputStream in =
         // Load the json resource containing default document formats.
-        (StringUtils.isBlank(properties.getDocumentFormatRegistry())
+        StringUtils.isBlank(properties.getDocumentFormatRegistry())
             ? resourceLoader.getResource("classpath:document-formats.json").getInputStream()
-            : resourceLoader
-                .getResource(properties.getDocumentFormatRegistry())
-                .getInputStream())) {
+            : resourceLoader.getResource(properties.getDocumentFormatRegistry()).getInputStream()) {
 
       // Create the registry
       final DocumentFormatRegistry registry =

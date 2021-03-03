@@ -20,8 +20,10 @@
 package org.jodconverter.remote.task;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.client.fluent.Executor;
@@ -33,6 +35,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.jodconverter.core.document.DocumentFormat;
 import org.jodconverter.core.job.SourceDocumentSpecs;
 import org.jodconverter.core.job.TargetDocumentSpecs;
 import org.jodconverter.core.office.OfficeContext;
@@ -59,7 +62,7 @@ public class RemoteConversionTask extends AbstractRemoteOfficeTask {
    * @param target The target specifications for the conversion.
    */
   public RemoteConversionTask(
-      @NonNull final SourceDocumentSpecs source, @NonNull final TargetDocumentSpecs target) {
+      final @NonNull SourceDocumentSpecs source, final @NonNull TargetDocumentSpecs target) {
     super(source);
 
     this.target = target;
@@ -92,7 +95,7 @@ public class RemoteConversionTask extends AbstractRemoteOfficeTask {
   }
 
   @Override
-  public void execute(@NonNull final OfficeContext context) throws OfficeException {
+  public void execute(final @NonNull OfficeContext context) throws OfficeException {
 
     LOGGER.info("Executing remote conversion task...");
     final RemoteOfficeContext remoteContext = (RemoteOfficeContext) context;
@@ -112,7 +115,11 @@ public class RemoteConversionTask extends AbstractRemoteOfficeTask {
 
         // See https://github.com/LibreOffice/online/blob/master/wsd/reference.txt
         final HttpEntity entity =
-            MultipartEntityBuilder.create().addPart("data", new FileBody(sourceFile)).build();
+            MultipartEntityBuilder.create()
+                .setLaxMode()
+                .setCharset(StandardCharsets.UTF_8)
+                .addPart("data", new FileBody(sourceFile))
+                .build();
 
         // Use the fluent API to post the file and save the response into the target file.
         final RequestConfig requestConfig = remoteContext.getRequestConfig();
@@ -127,12 +134,14 @@ public class RemoteConversionTask extends AbstractRemoteOfficeTask {
 
         // We suppose that the server supports custom store properties, but LibreOffice Online
         // does not support custom store properties, only the sample web service do.
-        addPropertiesToBuilder(
-            uriBuilder,
-            STORE_PROPERTIES_PREFIX_PARAM,
-            target
-                .getFormat()
-                .getStoreProperties(Objects.requireNonNull(source.getFormat()).getInputFamily()));
+        Optional.ofNullable(source.getFormat())
+            .map(DocumentFormat::getInputFamily)
+            .ifPresent(
+                family ->
+                    addPropertiesToBuilder(
+                        uriBuilder,
+                        STORE_PROPERTIES_PREFIX_PARAM,
+                        target.getFormat().getStoreProperties(family)));
 
         Executor.newInstance(remoteContext.getHttpClient())
             .execute(
@@ -172,9 +181,8 @@ public class RemoteConversionTask extends AbstractRemoteOfficeTask {
         + Objects.requireNonNull(target.getFormat()).getExtension();
   }
 
-  @NonNull
   @Override
-  public String toString() {
+  public @NonNull String toString() {
     return getClass().getSimpleName() + "{" + "source=" + source + ", target=" + target + '}';
   }
 }

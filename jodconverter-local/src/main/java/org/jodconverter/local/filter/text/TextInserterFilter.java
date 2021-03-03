@@ -19,9 +19,8 @@
 
 package org.jodconverter.local.filter.text;
 
-import java.awt.Dimension;
+import java.awt.*;
 import java.util.Map;
-import java.util.Objects;
 
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.drawing.XShape;
@@ -64,7 +63,7 @@ public class TextInserterFilter extends AbstractTextContentInserterFilter {
    *     (millimeters).
    */
   public TextInserterFilter(
-      @NonNull final String text,
+      final @NonNull String text,
       final int width,
       final int height,
       final int horizontalPosition,
@@ -81,16 +80,15 @@ public class TextInserterFilter extends AbstractTextContentInserterFilter {
    * converting a document.
    *
    * @param text The text to insert.
-   * @param width The width of the graphic to insert. The original image will be resize if required
-   *     (millimeters).
-   * @param height The height of the image. The original image will be resize if required
-   *     (millimeters).
+   * @param width The width of the rectangle to insert (millimeters).
+   * @param height The height of the rectangle to insert (millimeters).
    * @param shapeProperties The properties to apply to the created rectangle shape.
    * @see <a
-   *     href="https://wiki.openoffice.org/wiki/Documentation/DevGuide/Text/Drawing_Shapes">Drawing_Shapes</a>
+   *     href="https://api.libreoffice.org/docs/idl/ref/servicecom_1_1sun_1_1star_1_1text_1_1Shape.html">Drawing
+   *     Shapes</a>
    */
   public TextInserterFilter(
-      @NonNull final String text,
+      final @NonNull String text,
       final int width,
       final int height,
       final @NonNull Map<@NonNull String, @NonNull Object> shapeProperties) {
@@ -103,15 +101,14 @@ public class TextInserterFilter extends AbstractTextContentInserterFilter {
 
   @Override
   public void doFilter(
-      @NonNull final OfficeContext context,
-      @NonNull final XComponent document,
-      @NonNull final FilterChain chain)
+      final @NonNull OfficeContext context,
+      final @NonNull XComponent document,
+      final @NonNull FilterChain chain)
       throws Exception {
-
-    LOGGER.debug("Applying the TextInserterFilter");
 
     // This filter can only be used with text document
     if (Write.isText(document)) {
+      LOGGER.debug("Applying the TextInserterFilter");
       insertText(document);
     }
 
@@ -141,8 +138,7 @@ public class TextInserterFilter extends AbstractTextContentInserterFilter {
     }
 
     // Querying for the interface XTextDocument (text interface) on the XComponent
-    final XTextDocument docText = Write.getTextDoc(document);
-    Objects.requireNonNull(docText);
+    final XTextDocument docText = Lo.qi(XTextDocument.class, document);
 
     // Access the XText interface of the text contained within the frame
     XText text = docText.getText();

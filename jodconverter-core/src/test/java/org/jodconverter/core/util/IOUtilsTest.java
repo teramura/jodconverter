@@ -19,15 +19,56 @@
 
 package org.jodconverter.core.util;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import org.jodconverter.core.test.util.AssertUtil;
 
 /** Contains tests for the {@link IOUtils} class. */
-public class IOUtilsTest {
+class IOUtilsTest {
 
   @Test
-  public void new_ClassWellDefined() {
+  void classWellDefined() {
     AssertUtil.assertUtilityClassWellDefined(IOUtils.class);
+  }
+
+  @Nested
+  class ToString {
+
+    @Test
+    void withInputStream_ShouldReturnInputStreamAsString() throws IOException {
+
+      final Charset encoding = StandardCharsets.UTF_8;
+      final String test = "ABDCEF\nGHIJKL  \nMNOPQRS\n\tTUVWXYZééé^ç^ç^ç^ç^pawewew";
+
+      try (ByteArrayInputStream in = new ByteArrayInputStream(test.getBytes(encoding))) {
+        assertThat(IOUtils.toString(in, encoding)).isEqualTo(test);
+      }
+    }
+  }
+
+  @Nested
+  class Copy {
+
+    @Test
+    void withInputStream_ShouldReturnOutputStreamWithSameContent() throws IOException {
+
+      final Charset encoding = StandardCharsets.UTF_8;
+      final String test = "pç^pçàè^pç^ç;à;èàè.!@#!@#$@#$%ABDCEF\nGHIJKL  \nMNRS\n\tTUVWew";
+
+      try (ByteArrayInputStream in = new ByteArrayInputStream(test.getBytes(encoding));
+          ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+        IOUtils.copy(in, out);
+        assertThat(out.toString(encoding.name())).isEqualTo(test);
+      }
+    }
   }
 }

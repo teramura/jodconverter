@@ -19,5 +19,8 @@
 
 package org.jodconverter.core.office;
 
-/** {@link OfficeContext} pool implementation that does not depend on an office installation. */
+/**
+ * {@link org.jodconverter.core.office.OfficeContext} pool implementation that does not depend on an
+ * office installation.
+ */
 public final class SimpleOfficeContext implements OfficeContext {}

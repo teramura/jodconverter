@@ -1,27 +1,95 @@
-# global default
-#container:
-#  image: gradle:jdk8
+# Linux
+linux_task:
+  install_script:
+    # The following uses latest LO version. Without this, the tests would
+    # be executed using an older LO version (4.2.8.2 as of 2020-01-14)
+    #- add-apt-repository -y ppa:libreoffice/libreoffice-5-4
+    #- add-apt-repository -y ppa:libreoffice/libreoffice-4-2
+    #- add-apt-repository -y ppa:libreoffice/ppa
+    - apt-get -q update
+    - apt-get -y install libreoffice
+  # See https://hub.docker.com/_/openjdk for openjdk versions that could be tested.
+  matrix:
+    - name: linux:openjdk8
+      env:
+        CI_NAME: "CirrusCI"
+        CI_BUILD_NUMBER: $CIRRUS_TASK_ID
+        CI_BUILD_URL: "https://cirrus-ci.com/task/$CIRRUS_TASK_ID"
+        CI_BRANCH: $CIRRUS_BRANCH
+        CI_PULL_REQUEST: $CIRRUS_PR
+        COVERALLS_REPO_TOKEN: ENCRYPTED[9fa0f47af9055f09dc3f3e65c4d126fedff998cbdc4430847762be36c38477f0658d577cd981a6ed8bd5439fa8e4defd]
+      container:
+        image: openjdk:8-jdk
+      build_script:
+        - ./gradlew build -x javadoc --stacktrace
+      coverage_script:
+        - ./gradlew coveralls --warning-mode all
+    - name: linux:openjdk11
+      container:
+        image: openjdk:11-jdk
+      build_script:
+        - ./gradlew build -x javadoc --stacktrace
 
-build_task:
+# Windows
+windows_task:
+  windows_container:
+    image: cirrusci/windowsservercore:2019
+  env:
+    JAVA_HOME: C:\Program Files\AdoptOpenJDK
+  clone_script:
+    # Use custom cloning to set the autocrlf to true orelse spotless will fail on Windows.
+    CMD.exe /C ECHO ON &
+      IF NOT DEFINED CIRRUS_PR (
+      git config --global core.autocrlf true &
+      git clone --recursive --branch=%CIRRUS_BRANCH% https://x-access-token:%CIRRUS_REPO_CLONE_TOKEN%@github.com/%CIRRUS_REPO_FULL_NAME%.git %CIRRUS_WORKING_DIR% &
+      git reset --hard %CIRRUS_CHANGE_IN_REPO%
+    ) ELSE (
+      git config --global core.autocrlf true &
+      git clone --recursive https://x-access-token:%CIRRUS_REPO_CLONE_TOKEN%@github.com/%CIRRUS_REPO_FULL_NAME%.git %CIRRUS_WORKING_DIR% &
+      git fetch origin pull/%CIRRUS_PR%/head:pull/%CIRRUS_PR% &
+      git reset --hard %CIRRUS_CHANGE_IN_REPO%
+    )
+  matrix:
+    - name: windows:adoptopenjdk8
+      env:
+        # https://chocolatey.org/packages/adoptopenjdk8
+        ADOPTOPENJDK_PACKAGE: adoptopenjdk8
+    - name: windows:adoptopenjdk11
+      env:
+        # https://chocolatey.org/packages/adoptopenjdk11
+        ADOPTOPENJDK_PACKAGE: adoptopenjdk11
+  install_script:
+    - choco install -y libreoffice
+    - choco install -y %ADOPTOPENJDK_PACKAGE% --params="/ADDLOCAL=FeatureMain,FeatureJavaHome /INSTALLDIR=%JAVA_HOME% /quiet"
+  build_script:
+    - gradlew.bat build -x javadoc --stacktrace
+
+# macOS
+macos_task:
+  # See https://cirrus-ci.org/guide/macOS/#list-of-available-images versions that could be tested.
+  matrix:
+    - name: macos:xcode:12.2
+      macos_instance:
+        image: catalina-xcode-12.2
+  install_script:
+    #- brew update
+    - brew cask install libreoffice
+  build_script:
+    - ./gradlew build -x javadoc --stacktrace
+
+# FreeBSD
+freebsd_task:
   freebsd_instance:
-    image: freebsd-12-0-release-amd64
-#  gradle_cache:
-#    folder: ~/.gradle/caches
-#   install_zip_script:
-#      pkg install -y zip
-#      cd /usr/ports/archivers/zip
-#      make install clean
-#   install_sdkman_script:
-#    - curl -s "https://get.sdkman.io" | bash
-#    - source "/home/user/.sdkman/bin/sdkman-init.sh"
-  install_gradle_script:
-#    #- sdk install gradle
-    - pkg install -y gradle
+    image_family: freebsd-12-1
   install_libreoffice_script:
     - pkg install -y libreoffice
+  # See https://www.freebsd.org/java/ for all available openjdk that could be tested.
+  matrix:
+      - name: freebsd:openjdk8
+        install_java_script:
+          - pkg install -y openjdk8
+      - name: freebsd:openjdk11
+        install_java_script:
+          - pkg install -y openjdk11
   build_script:
-    - gradle build
-    #- ./gradlew build --stacktrace
-#  cleanup_before_cache_script:
-#    - rm -rf ~/.gradle/caches/$GRADLE_VERSION/
-#    - find ~/.gradle/caches/ -name "*.lock" -type f -delete
+    - ./gradlew build -x javadoc --stacktrace

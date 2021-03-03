@@ -9,27 +9,27 @@ public class Deps {
   // Compile
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Latest version -> https://mvnrepository.com/artifact/org.checkerframework/checker-qual
-  public static final String checkerVersion = "3.1.1";
+  public static final String checkerVersion = "3.9.1";
 
   // Main
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Latest version -> https://mvnrepository.com/artifact/commons-cli/commons-cli
   public static final String commonsCliVersion = "1.4";
   // Latest version -> https://mvnrepository.com/artifact/commons-io/commons-io
-  public static final String commonsIoVersion = "2.6";
+  public static final String commonsIoVersion = "2.8.0";
   // Latest version -> https://mvnrepository.com/artifact/org.libreoffice
-  public static final String loVersion = "6.3.2";
+  public static final String loVersion = "7.0.4";
   // Latest version -> https://mvnrepository.com/artifact/org.openoffice
   public static final String ooVersion = "4.1.2";
   // Latest version -> https://mvnrepository.com/artifact/org.springframework.boot/spring-boot
-  public static final String springBootVersion = "2.2.4.RELEASE";
+  public static final String springBootVersion = "2.4.1";
 
   // Test
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~
   // Latest version -> https://mvnrepository.com/artifact/org.powermock/powermock-api-mockito2
-  public static final String powermockVersion = "2.0.4";
+  public static final String powermockVersion = "2.0.9";
   // Latest version -> https://mvnrepository.com/artifact/com.github.tomakehurst/wiremock
-  public static final String wiremockVersion = "2.25.1";
+  public static final String wiremockVersion = "2.27.2";
 
   // ~~~~~~~~~~~~~~~~~~~~~~~~~~
   // DEPENDENCIES
@@ -88,16 +88,15 @@ public class Deps {
   public static final String assertj = "org.assertj:assertj-core";
   public static final String junitJupiterApi = "org.junit.jupiter:junit-jupiter-api";
   public static final String junitJupiterEngine = "org.junit.jupiter:junit-jupiter-engine";
+  public static final String junitJupiterParams = "org.junit.jupiter:junit-jupiter-params";
   public static final String junitVintageEngine = "org.junit.vintage:junit-vintage-engine";
   public static final String mockito = "org.mockito:mockito-core";
   public static final String powermockJunit =
       "org.powermock:powermock-module-junit4:" + powermockVersion;
   public static final String powermockMockito =
       "org.powermock:powermock-api-mockito2:" + powermockVersion;
-  // We now have to use the wiremock standalone version since jetty dependency
-  // is provided by spring boot
-  //  public static final String  wiremock =
-  //  "com.github.tomakehurst:wiremock:" + wiremockVersion;
+  // We now have to use the wiremock standalone version since
+  // jetty dependency is provided by spring boot
   public static final String wiremock =
       "com.github.tomakehurst:wiremock-standalone:" + wiremockVersion;
 }

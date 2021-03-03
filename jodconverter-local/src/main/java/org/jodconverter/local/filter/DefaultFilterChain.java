@@ -45,7 +45,7 @@ public class DefaultFilterChain extends AbstractFilterChain {
    *
    * @param filters The filters to add to the chain.
    */
-  public DefaultFilterChain(final Filter... filters) {
+  public DefaultFilterChain(final @Nullable Filter... filters) {
     this(true, filters);
   }
 
@@ -70,25 +70,30 @@ public class DefaultFilterChain extends AbstractFilterChain {
    * @param filters The filters to add to the chain.
    */
   public DefaultFilterChain(
-      final boolean endsWithRefreshFilter, @Nullable final Filter... filters) {
+      final boolean endsWithRefreshFilter, final @Nullable Filter... filters) {
     super(filters);
 
     this.endsWithRefreshFilter = endsWithRefreshFilter;
   }
 
-  @NonNull
   @Override
-  public FilterChain copy() {
+  public @NonNull FilterChain copy() {
     return new DefaultFilterChain(endsWithRefreshFilter, filters.toArray(new Filter[0]));
   }
 
   @Override
-  public void doFilter(@NonNull final OfficeContext context, @NonNull final XComponent document)
+  public void doFilter(final @NonNull OfficeContext context, final @NonNull XComponent document)
       throws OfficeException {
 
     // Call the RefreshFilter if we are at the end of the chain
     if (pos == filters.size() && endsWithRefreshFilter) {
-      doFilter(RefreshFilter.LAST_REFRESH, context, document);
+      if (pos == 0) {
+        doFilter(RefreshFilter.LAST_REFRESH, context, document);
+      } else
+      // Do not execute a final refresh filter if already done by the last executed filter.
+      if (!(filters.get(pos - 1) instanceof RefreshFilter)) {
+        doFilter(RefreshFilter.LAST_REFRESH, context, document);
+      }
     } else {
       super.doFilter(context, document);
     }

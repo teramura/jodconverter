@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 
 import com.sun.star.lib.uno.helper.UnoUrl;
 import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Wrapper class around an UnoUrl so we are not importing the com.sun.star.lib.uno.helper.UnoUrl
@@ -44,6 +45,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
  */
 class OfficeUrl {
 
+  private static final String DEFAULT_HOST = "127.0.0.1";
+
   private final UnoUrl unoUrl;
 
   /**
@@ -52,7 +55,7 @@ class OfficeUrl {
    * @param pipeName The pipe name.
    * @return The created UnoUrl.
    */
-  /* default */ static UnoUrl pipe(@NonNull final String pipeName) {
+  /* default */ static UnoUrl pipe(final @NonNull String pipeName) {
 
     // Here we must use a try catch since OpenOffice and LibreOffice doesn't
     // have the same UnoUrl.parseUnoUrl signature
@@ -64,20 +67,30 @@ class OfficeUrl {
   }
 
   /**
-   * Creates an UnoUrl for the specified port.
+   * Creates an UnoUrl for the specified port on host 127.0.0.1.
    *
    * @param port The port.
    * @return The created UnoUrl.
    */
   /* default */ static UnoUrl socket(final int port) {
+    return socket(null, port);
+  }
 
+  /**
+   * Creates an UnoUrl for the specified port.
+   *
+   * @param host The host. Uses 127.0.0.1 if null.
+   * @param port The port.
+   * @return The created UnoUrl.
+   */
+  /* default */ static UnoUrl socket(final String host, final int port) {
+
+    final String h = host == null ? DEFAULT_HOST : host;
     // Here we must use a try catch since OpenOffice and LibreOffice doesn't
     // have the same UnoUrl.parseUnoUrl signature
     try {
       return UnoUrl.parseUnoUrl(
-          "socket,host=127.0.0.1,port=" + port + ",tcpNoDelay=1;urp;StarOffice.ServiceManager");
-      //      return UnoUrl.parseUnoUrl(
-      //          "socket,host=localhost,port=" + port + ";urp;StarOffice.ServiceManager");
+          "socket,host=" + h + ",port=" + port + ",tcpNoDelay=1;urp;StarOffice.ServiceManager");
     } catch (Exception ex) {
       throw new IllegalArgumentException(ex);
     }
@@ -88,19 +101,27 @@ class OfficeUrl {
    *
    * @param pipeName The pipe name.
    */
-  public OfficeUrl(final String pipeName) {
+  public OfficeUrl(final @NonNull String pipeName) {
+    unoUrl = pipe(pipeName);
+  }
 
-    this.unoUrl = pipe(pipeName);
+  /**
+   * Creates an OfficeUrl for the specified port on host 127.0.0.1
+   *
+   * @param port The port.
+   */
+  public OfficeUrl(final int port) {
+    this(DEFAULT_HOST, port);
   }
 
   /**
    * Creates an OfficeUrl for the specified port.
    *
+   * @param host The host, may be null.
    * @param port The port.
    */
-  public OfficeUrl(final int port) {
-
-    this.unoUrl = socket(port);
+  public OfficeUrl(final @Nullable String host, final int port) {
+    unoUrl = socket(host, port);
   }
 
   /**
@@ -198,4 +219,73 @@ class OfficeUrl {
   public String toString() {
     return unoUrl.toString();
   }
+
+  //  /**
+  //   * Main entry point of the program used to test this class.
+  //   *
+  //   * @param args program arguments.
+  //   */
+  //  public static void main(final String[] args) {
+  //
+  //    // Here we must use a try catch since OpenOffice and LibreOffice doesn't
+  //    // have the same UnoUrl.parseUnoUrl signature
+  //    try {
+  //      OfficeUrl url = new OfficeUrl(2002);
+  //
+  //      System.out.println("WITH PORT");
+  //      System.out.println(String.format("url.getConnection(): %s", url.getConnection()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getConnectionAndParametersAsString(): %s",
+  //              url.getConnectionAndParametersAsString()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getConnectionParametersAsString(): %s",
+  // url.getConnectionParametersAsString()));
+  //      System.out.println(
+  //          String.format("url.getConnectionParameters(): %s", url.getConnectionParameters()));
+  //      System.out.println(String.format("url.getProtocol(): %s", url.getProtocol()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getProtocolAndParametersAsString(): %s",
+  //              url.getProtocolAndParametersAsString()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getProtocolParametersAsString(): %s", url.getProtocolParametersAsString()));
+  //      System.out.println(
+  //          String.format("url.getProtocolParameters(): %s", url.getProtocolParameters()));
+  //      System.out.println(String.format("url.getRootOid(): %s", url.getRootOid()));
+  //
+  //      System.out.println();
+  //      System.out.println();
+  //
+  //      url = new OfficeUrl("office");
+  //
+  //      System.out.println("WITH PIPE");
+  //      System.out.println(String.format("url.getConnection(): %s", url.getConnection()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getConnectionAndParametersAsString(): %s",
+  //              url.getConnectionAndParametersAsString()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getConnectionParametersAsString(): %s",
+  // url.getConnectionParametersAsString()));
+  //      System.out.println(
+  //          String.format("url.getConnectionParameters(): %s", url.getConnectionParameters()));
+  //      System.out.println(String.format("url.getProtocol(): %s", url.getProtocol()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getProtocolAndParametersAsString(): %s",
+  //              url.getProtocolAndParametersAsString()));
+  //      System.out.println(
+  //          String.format(
+  //              "url.getProtocolParametersAsString(): %s", url.getProtocolParametersAsString()));
+  //      System.out.println(
+  //          String.format("url.getProtocolParameters(): %s", url.getProtocolParameters()));
+  //      System.out.println(String.format("url.getRootOid(): %s", url.getRootOid()));
+  //    } catch (Exception ex) {
+  //      throw new IllegalArgumentException(ex);
+  //    }
+  //  }
 }

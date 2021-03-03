@@ -26,6 +26,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import org.jodconverter.core.document.DocumentFormatProperties;
+import org.jodconverter.local.office.ExistingProcessAction;
 
 /** Configuration class for JODConverter. */
 @ConfigurationProperties("jodconverter.local")
@@ -41,11 +42,18 @@ public class JodConverterLocalProperties {
   private String officeHome;
 
   /**
+   * Host name that will be use in the --accept argument when starting an office process. Most of
+   * the time, the default will work. But if it doesn't work (unable to connect to the started
+   * process), using 'localhost' as host name instead may work.
+   */
+  private String hostName = "127.0.0.1";
+
+  /**
    * List of ports, separated by commas, used by each JODConverter processing thread. The number of
    * office instances is equal to the number of ports, since 1 office process will be launched for
    * each port number.
    */
-  private int[] portNumbers = new int[] {2002};
+  private int[] portNumbers = {2002};
 
   /**
    * Directory where temporary office profiles will be created. If not set, it defaults to the
@@ -60,22 +68,63 @@ public class JodConverterLocalProperties {
   private String templateProfileDir;
 
   /**
-   * Indicates whether we must kill existing office process when an office process already exists
-   * for the same connection string.
+   * Class name for explicit office process manager. Type of the provided process manager. The class
+   * must implement the org.jodconverter.local.process.ProcessManager interface.
    */
-  private boolean killExistingProcess = true;
+  private String processManagerClass;
 
   /**
    * Process timeout (milliseconds). Used when trying to execute an office process call
-   * (start/terminate).
+   * (start/connect/terminate).
    */
   private long processTimeout = 120_000L;
 
   /**
    * Process retry interval (milliseconds). Used for waiting between office process call tries
-   * (start/terminate).
+   * (start/connect/terminate).
    */
   private long processRetryInterval = 250L;
+
+  /** Specifies the delay after an attempt to start an office process before doing anything else. */
+  private long afterStartProcessDelay = 0L;
+
+  /**
+   * Specifies the action the must be taken when starting a new office process and there already is
+   * a existing running process for the same connection string.
+   */
+  private ExistingProcessAction existingProcessAction = ExistingProcessAction.KILL;
+
+  /**
+   * Controls whether the manager will "fail fast" if an office process cannot be started or the
+   * connection to the started process fails. If set to {@code true}, the start of a process will
+   * wait for the task to be completed, and will throw an exception if the office process is not
+   * started successfully or if the connection to the started process fails, preventing the
+   * application from starting. If set to {@code false}, the task of starting the process and
+   * connecting to it will be submitted and will return immediately, meaning a faster starting
+   * process. Only error logs will be produced if anything goes wrong.
+   */
+  private boolean startFailFast;
+
+  /**
+   * Controls whether the manager will keep the office process alive on shutdown. If set to {@code
+   * true}, the stop task will only disconnect from the office process, which will stay alive. If
+   * set to {@code false}, the office process will be stopped gracefully (or killed if could not
+   * been stopped gracefully).
+   */
+  private boolean keepAliveOnShutdown;
+
+  /**
+   * Specifies whether OpenGL must be disabled when starting a new office process. Nothing will be
+   * done if OpenGL is already disabled according to the user profile used with the office process.
+   * If the options is changed, then office will be restarted.
+   */
+  private boolean disableOpengl;
+
+  /**
+   * Maximum living time of a task in the conversion queue. The task will be removed from the queue
+   * if the waiting time is longer than this timeout.
+   */
+  private long taskQueueTimeout = 30_000L;
 
   /**
    * Maximum time allowed to process a task. If the processing time of a task is longer than this
@@ -85,18 +134,6 @@ public class JodConverterLocalProperties {
 
   /** Maximum number of tasks an office process can execute before restarting. */
   private int maxTasksPerProcess = 200;
-
-  /**
-   * Maximum living time of a task in the conversion queue. The task will be removed from the queue
-   * if the waiting time is longer than this timeout.
-   */
-  private long taskQueueTimeout = 30_000L;
-
-  /**
-   * Class name for explicit office process manager. Type of the provided process manager. The class
-   * must implement the org.jodconverter.process.ProcessManager interface.
-   */
-  private String processManagerClass;
 
   /** Path to the registry which contains the document formats that will be supported by default. */
   private String documentFormatRegistry;
@@ -112,13 +149,20 @@ public class JodConverterLocalProperties {
     this.enabled = enabled;
   }
 
-  @Nullable
-  public String getOfficeHome() {
+  public @Nullable String getOfficeHome() {
     return officeHome;
   }
 
-  public void setOfficeHome(@Nullable final String officeHome) {
+  public void setOfficeHome(final @Nullable String officeHome) {
     this.officeHome = officeHome;
+  }
+
+  public @Nullable String getHostName() {
+    return hostName;
+  }
+
+  public void setHostName(final @Nullable String hostName) {
+    this.hostName = hostName;
   }
 
   public int[] getPortNumbers() {
@@ -129,30 +173,28 @@ public class JodConverterLocalProperties {
     this.portNumbers = portNumbers;
   }
 
-  @Nullable
-  public String getWorkingDir() {
+  public @Nullable String getWorkingDir() {
     return workingDir;
   }
 
-  public void setWorkingDir(@Nullable final String workingDir) {
+  public void setWorkingDir(final @Nullable String workingDir) {
     this.workingDir = workingDir;
   }
 
-  @Nullable
-  public String getTemplateProfileDir() {
+  public @Nullable String getTemplateProfileDir() {
     return templateProfileDir;
   }
 
-  public void setTemplateProfileDir(@Nullable final String templateProfileDir) {
+  public void setTemplateProfileDir(final @Nullable String templateProfileDir) {
     this.templateProfileDir = templateProfileDir;
   }
 
-  public boolean isKillExistingProcess() {
-    return killExistingProcess;
+  public @Nullable String getProcessManagerClass() {
+    return processManagerClass;
   }
 
-  public void setKillExistingProcess(final boolean killExistingProcess) {
-    this.killExistingProcess = killExistingProcess;
+  public void setProcessManagerClass(final @Nullable String processManagerClass) {
+    this.processManagerClass = processManagerClass;
   }
 
   public long getProcessTimeout() {
@@ -171,6 +213,55 @@ public class JodConverterLocalProperties {
     this.processRetryInterval = procesRetryInterval;
   }
 
+  public long getAfterStartProcessDelay() {
+    return afterStartProcessDelay;
+  }
+
+  public void setAfterStartProcessDelay(final long afterStartProcessDelay) {
+    this.afterStartProcessDelay = afterStartProcessDelay;
+  }
+
+  public @Nullable ExistingProcessAction getExistingProcessAction() {
+    return existingProcessAction;
+  }
+
+  public void setExistingProcessAction(
+      final @Nullable ExistingProcessAction existingProcessAction) {
+    this.existingProcessAction = existingProcessAction;
+  }
+
+  public boolean isStartFailFast() {
+    return startFailFast;
+  }
+
+  public void setStartFailFast(final boolean startFailFast) {
+    this.startFailFast = startFailFast;
+  }
+
+  public boolean isKeepAliveOnShutdown() {
+    return keepAliveOnShutdown;
+  }
+
+  public void setKeepAliveOnShutdown(final boolean keepAliveOnShutdown) {
+    this.keepAliveOnShutdown = keepAliveOnShutdown;
+  }
+
+  public boolean isDisableOpengl() {
+    return disableOpengl;
+  }
+
+  public void setDisableOpengl(final boolean disableOpengl) {
+    this.disableOpengl = disableOpengl;
+  }
+
+  public long getTaskQueueTimeout() {
+    return taskQueueTimeout;
+  }
+
+  public void setTaskQueueTimeout(final long taskQueueTimeout) {
+    this.taskQueueTimeout = taskQueueTimeout;
+  }
+
   public long getTaskExecutionTimeout() {
     return taskExecutionTimeout;
   }
@@ -187,39 +278,20 @@ public class JodConverterLocalProperties {
     this.maxTasksPerProcess = maxTasksPerProcess;
   }
 
-  public long getTaskQueueTimeout() {
-    return taskQueueTimeout;
-  }
-
-  public void setTaskQueueTimeout(final long taskQueueTimeout) {
-    this.taskQueueTimeout = taskQueueTimeout;
-  }
-
-  @Nullable
-  public String getProcessManagerClass() {
-    return processManagerClass;
-  }
-
-  public void setProcessManagerClass(@Nullable final String processManagerClass) {
-    this.processManagerClass = processManagerClass;
-  }
-
-  @Nullable
-  public String getDocumentFormatRegistry() {
+  public @Nullable String getDocumentFormatRegistry() {
     return documentFormatRegistry;
   }
 
-  public void setDocumentFormatRegistry(@Nullable final String documentFormatRegistry) {
+  public void setDocumentFormatRegistry(final @Nullable String documentFormatRegistry) {
     this.documentFormatRegistry = documentFormatRegistry;
   }
 
-  @Nullable
-  public Map<@NonNull String, @NonNull DocumentFormatProperties> getFormatOptions() {
+  public @Nullable Map<@NonNull String, @NonNull DocumentFormatProperties> getFormatOptions() {
     return formatOptions;
   }
 
   public void setFormatOptions(
-      @Nullable final Map<@NonNull String, @NonNull DocumentFormatProperties> formatOptions) {
+      final @Nullable Map<@NonNull String, @NonNull DocumentFormatProperties> formatOptions) {
     this.formatOptions = formatOptions;
   }
 }

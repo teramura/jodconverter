@@ -22,7 +22,6 @@ package org.jodconverter.local.filter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -49,13 +48,12 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.jodconverter.core.document.DocumentFamily;
 import org.jodconverter.core.office.OfficeContext;
 import org.jodconverter.core.util.AssertUtils;
-import org.jodconverter.local.office.utils.Calc;
-import org.jodconverter.local.office.utils.Draw;
+import org.jodconverter.local.office.LocalOfficeUtils;
 import org.jodconverter.local.office.utils.Lo;
 import org.jodconverter.local.office.utils.Props;
-import org.jodconverter.local.office.utils.Write;
 
 /**
  * This filter is used to select specific pages from a document in order to convert only the
@@ -77,7 +75,7 @@ public class PagesSelectorFilter implements Filter {
    *
    * @param pages The page numbers of the page to convert. First page is index 1.
    */
-  public PagesSelectorFilter(@NonNull final Integer... pages) {
+  public PagesSelectorFilter(final @NonNull Integer... pages) {
     this(Stream.of(pages).collect(Collectors.toSet()));
   }
 
@@ -87,7 +85,7 @@ public class PagesSelectorFilter implements Filter {
    *
    * @param pages The page numbers of the page to convert. First page is index 1.
    */
-  public PagesSelectorFilter(@NonNull final Set<@NonNull Integer> pages) {
+  public PagesSelectorFilter(final @NonNull Set<@NonNull Integer> pages) {
     super();
 
     AssertUtils.notEmpty(pages, "pages must not be null nor empty");
@@ -97,37 +95,39 @@ public class PagesSelectorFilter implements Filter {
 
   @Override
   public void doFilter(
-      @NonNull final OfficeContext context,
-      @NonNull final XComponent document,
-      @NonNull final FilterChain chain)
+      final @NonNull OfficeContext context,
+      final @NonNull XComponent document,
+      final @NonNull FilterChain chain)
       throws Exception {
 
-    if (Write.isText(document)) {
-      LOGGER.debug("Applying the PagesSelectorFilter for a Text document");
+    final DocumentFamily family = LocalOfficeUtils.getDocumentFamilySilently(document);
+    if (family != null) {
 
-      // We must process from the start to the end.
-      Collections.sort(pages);
-      selectTextPages(Objects.requireNonNull(Write.getTextDoc(document)));
+      switch (family) {
+        case TEXT:
+          LOGGER.debug("Applying the PagesSelectorFilter for a Text document");
 
-    } else if (Calc.isCalc(document)) {
-      LOGGER.debug("Applying the PagesSelectorFilter for a Calc document");
+          // We must process from the start to the end.
+          Collections.sort(pages);
+          selectTextPages(Lo.qi(XTextDocument.class, document));
+          break;
+        case SPREADSHEET:
+          LOGGER.debug("Applying the PagesSelectorFilter for a Calc document");
 
-      // We must process from the end to the start.
-      selectSheets(Objects.requireNonNull(Calc.getCalcDoc(document)));
+          // We must process from the end to the start.
+          selectSheets(Lo.qi(XSpreadsheetDocument.class, document));
+          break;
+        case PRESENTATION:
+        case DRAWING:
+          LOGGER.debug(
+              "Applying the PagesSelectorFilter for a {} document",
+              family == DocumentFamily.DRAWING ? "Draw" : "Impress");
 
-    } else if (Draw.isImpress(document)) {
-      LOGGER.debug("Applying the PagesSelectorFilter for an Impress document");
-
-      // We must process from the end to the start.
-      pages.sort(Collections.reverseOrder());
-      selectDrawPages(document);
-
-    } else if (Draw.isDraw(document)) {
-      LOGGER.debug("Applying the PagesSelectorFilter for a Draw document");
-
-      // We must process from the end to the start.
-      pages.sort(Collections.reverseOrder());
-      selectDrawPages(document);
+          // We must process from the end to the start.
+          pages.sort(Collections.reverseOrder());
+          selectDrawPages(Lo.qi(XDrawPagesSupplier.class, document));
+          break;
+      }
     }
 
     // Invoke the next filter in the chain
@@ -258,9 +258,9 @@ public class PagesSelectorFilter implements Filter {
     }
   }
 
-  private void selectDrawPages(final XComponent document) throws Exception {
+  private void selectDrawPages(final XDrawPagesSupplier supplier) throws Exception {
 
-    final XDrawPages drawPages = Lo.qi(XDrawPagesSupplier.class, document).getDrawPages();
+    final XDrawPages drawPages = supplier.getDrawPages();
     final int pageCount = drawPages.getCount();
 
     // Delete all the pages except the ones to select.

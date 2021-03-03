@@ -31,6 +31,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.jodconverter.boot.autoconfigure.JodConverterLocalProperties;
 import org.jodconverter.boot.autoconfigure.JodConverterRemoteProperties;
 import org.jodconverter.core.office.OfficeManager;
+import org.jodconverter.local.office.ExistingProcessAction;
 import org.jodconverter.local.office.LocalOfficeManager;
 import org.jodconverter.remote.office.RemoteOfficeManager;
 
@@ -67,28 +68,38 @@ public class AutoConfigurationPropertiesITest {
         .extracting(
             "enabled",
             "officeHome",
+            "hostName",
             "portNumbers",
             "workingDir",
             "templateProfileDir",
-            "killExistingProcess",
             "processTimeout",
             "processRetryInterval",
+            "afterStartProcessDelay",
+            "existingProcessAction",
+            "startFailFast",
+            "keepAliveOnShutdown",
+            "disableOpengl",
+            "taskQueueTimeout",
             "taskExecutionTimeout",
             "maxTasksPerProcess",
-            "taskQueueTimeout",
             "documentFormatRegistry")
         .containsExactly(
             true,
             "office-home",
+            "localhost",
             new int[] {2005, 2006},
             "working-dir",
             "template-profile-dir",
-            false,
             190_000L,
             1_000L,
+            3_000L,
+            ExistingProcessAction.FAIL,
+            true,
+            true,
+            true,
+            70_000L,
             70_000L,
             20,
-            70_000L,
             null);
   }
 
@@ -99,6 +110,8 @@ public class AutoConfigurationPropertiesITest {
         .extracting(
             "enabled",
             "url",
+            "connectTimeout",
+            "socketTimeout",
             "workingDir",
             "poolSize",
             "taskExecutionTimeout",
@@ -122,6 +135,8 @@ public class AutoConfigurationPropertiesITest {
         .containsExactly(
             true,
             "https://localhost:8001",
+            30_000L,
+            60_000L,
             "working-dir",
             1,
             70_000L,

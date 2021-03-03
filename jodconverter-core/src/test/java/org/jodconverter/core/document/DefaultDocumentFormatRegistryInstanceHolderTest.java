@@ -19,15 +19,57 @@
 
 package org.jodconverter.core.document;
 
+import java.util.Set;
+
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import org.jodconverter.core.test.util.AssertUtil;
 
 /** Contains tests for the {@link DefaultDocumentFormatRegistryInstanceHolder} class. */
-public class DefaultDocumentFormatRegistryInstanceHolderTest {
+class DefaultDocumentFormatRegistryInstanceHolderTest {
 
   @Test
-  public void new_ClassWellDefined() {
+  void classWellDefined() {
     AssertUtil.assertUtilityClassWellDefined(DefaultDocumentFormatRegistryInstanceHolder.class);
+  }
+
+  @Test
+  void setInstance_WithCustomRegistry_GetInstanceShouldReturnCustomRegistry() {
+
+    final DocumentFormatRegistry registry =
+        new DocumentFormatRegistry() {
+          @Override
+          public DocumentFormat getFormatByExtension(
+              @SuppressWarnings("NullableProblems") final String extension) {
+            return null;
+          }
+
+          @Override
+          public DocumentFormat getFormatByMediaType(
+              @SuppressWarnings("NullableProblems") final String mediaType) {
+            return null;
+          }
+
+          @Override
+          @SuppressWarnings("NullableProblems")
+          public Set<DocumentFormat> getOutputFormats(final DocumentFamily family) {
+            return null;
+          }
+
+          @Override
+          public String toString() {
+            return "setInstance_WithCustomRegistry_getInstanceShouldReturnCutomRedistry";
+          }
+        };
+
+    final DocumentFormatRegistry saved = DefaultDocumentFormatRegistryInstanceHolder.getInstance();
+    try {
+      DefaultDocumentFormatRegistryInstanceHolder.setInstance(registry);
+      Assertions.assertThat(DefaultDocumentFormatRegistryInstanceHolder.getInstance().toString())
+          .isEqualTo("setInstance_WithCustomRegistry_getInstanceShouldReturnCutomRedistry");
+    } finally {
+      DefaultDocumentFormatRegistryInstanceHolder.setInstance(saved);
+    }
   }
 }

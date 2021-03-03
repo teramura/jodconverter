@@ -31,6 +31,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.jodconverter.boot.autoconfigure.JodConverterLocalProperties;
 import org.jodconverter.boot.autoconfigure.JodConverterRemoteProperties;
 import org.jodconverter.core.office.OfficeManager;
+import org.jodconverter.local.office.ExistingProcessAction;
 import org.jodconverter.local.office.LocalOfficeManager;
 import org.jodconverter.remote.office.RemoteOfficeManager;
 
@@ -67,28 +68,38 @@ public class AutoConfigurationDefaultPropertiesITest {
         .extracting(
             "enabled",
             "officeHome",
+            "hostName",
             "portNumbers",
             "workingDir",
             "templateProfileDir",
-            "killExistingProcess",
             "processTimeout",
             "processRetryInterval",
+            "afterStartProcessDelay",
+            "existingProcessAction",
+            "startFailFast",
+            "keepAliveOnShutdown",
+            "disableOpengl",
+            "taskQueueTimeout",
             "taskExecutionTimeout",
             "maxTasksPerProcess",
-            "taskQueueTimeout",
             "documentFormatRegistry")
         .containsExactly(
             true,
             null,
+            "127.0.0.1",
             new int[] {2002},
             null,
             null,
-            true,
             120_000L,
             250L,
+            0L,
+            ExistingProcessAction.KILL,
+            false,
+            false,
+            false,
+            30_000L,
             120_000L,
             200,
-            30_000L,
             null);
   }
 

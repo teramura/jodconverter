@@ -20,6 +20,7 @@
 package org.jodconverter.spring;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.annotation.DirtiesContext.ClassMode.AFTER_CLASS;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,14 +34,17 @@ import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import org.jodconverter.core.office.OfficeException;
+import org.jodconverter.local.LocalConverter;
 
 /** Contains tests for the {@link JodConverterBean} class. */
-@ContextConfiguration
 @ExtendWith(SpringExtension.class)
+@ContextConfiguration
+@DirtiesContext(classMode = AFTER_CLASS)
 public class SpringControllerITest {
 
   /* default */ @TempDir File testFolder;
@@ -70,6 +74,23 @@ public class SpringControllerITest {
       writer.println("This is the first line of the input file.");
       writer.println("This is the second line of the input file.");
     }
+  }
+
+  @Test
+  public void testOfficeManager() throws OfficeException {
+
+    final File outputFile = new File(testFolder, "outputFile.txt");
+    LocalConverter.builder()
+        .officeManager(bean.getManager())
+        .build()
+        .convert(inputFileTxt)
+        .to(outputFile)
+        .execute();
+
+    assertThat(outputFile).as("Check %s file creation", outputFile.getName()).isFile();
+    assertThat(outputFile.length())
+        .as("Check %s file length", outputFile.getName())
+        .isGreaterThan(0L);
   }
 
   @Test

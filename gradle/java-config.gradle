@@ -11,7 +11,7 @@ apply plugin: 'pmd'
 apply plugin: 'checkstyle'
 apply plugin: 'nebula.facet'
 apply plugin: 'jacoco'
-apply plugin: 'com.diffplug.gradle.spotless'
+apply plugin: 'com.diffplug.spotless'
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Integration tests SourceSet configuration
@@ -28,10 +28,12 @@ facets {
 
 dependencies {
     implementation platform(Deps.springBootDependencies)
+
     compileOnly Deps.checkerQual
 
     testImplementation Deps.assertj
     testImplementation Deps.junitJupiterApi
+    testImplementation Deps.junitJupiterParams
     testImplementation Deps.mockito
 
     testRuntimeOnly Deps.checkerQual // Required by PowerMock
@@ -77,7 +79,7 @@ pmd {
     toolVersion = Plugins.pmdVersion
     ruleSetConfig = rootProject.resources.text.fromFile("ruleset.xml")
     ignoreFailures = true
-    rulePriority = 5
+    rulesMinimumPriority = 5
     // Don't use the default gradle rule sets
     ruleSets = []
 }

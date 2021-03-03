@@ -22,7 +22,6 @@ package org.jodconverter.local.filter.text;
 import static org.jodconverter.local.office.LocalOfficeUtils.toUrl;
 
 import java.io.File;
-import java.util.Objects;
 
 import com.sun.star.beans.PropertyValue;
 import com.sun.star.document.XDocumentInsertable;
@@ -51,7 +50,7 @@ public class DocumentInserterFilter implements Filter {
    *
    * @param document The document to insert at the end of the current document.
    */
-  public DocumentInserterFilter(@NonNull final File document) {
+  public DocumentInserterFilter(final @NonNull File document) {
     super();
 
     this.documentToInsert = document;
@@ -59,30 +58,26 @@ public class DocumentInserterFilter implements Filter {
 
   @Override
   public void doFilter(
-      @NonNull final OfficeContext context,
-      @NonNull final XComponent document,
-      @NonNull final FilterChain chain)
+      final @NonNull OfficeContext context,
+      final @NonNull XComponent document,
+      final @NonNull FilterChain chain)
       throws Exception {
 
-    LOGGER.debug("Applying the DocumentInserterFilter");
-
     // This filter can only be used with text document
-    if (Write.isText(document)) {
-      insertDocument(document);
+    final XTextDocument docText = Write.getTextDoc(document);
+    if (docText != null) {
+      LOGGER.debug("Applying the DocumentInserterFilter");
+      insertDocument(docText);
     }
 
     // Invoke the next filter in the chain
     chain.doFilter(context, document);
   }
 
-  private void insertDocument(final XComponent document) throws Exception {
-
-    // Querying for the interface XTextDocument (text interface) on the XComponent.
-    final XTextDocument docText = Write.getTextDoc(document);
-    Objects.requireNonNull(docText);
+  private void insertDocument(final XTextDocument document) throws Exception {
 
     // We need the text cursor in order to go to the end of the document.
-    final XTextCursor textCursor = docText.getText().createTextCursor();
+    final XTextCursor textCursor = document.getText().createTextCursor();
 
     // Go to the end of the document
     textCursor.gotoEnd(false);

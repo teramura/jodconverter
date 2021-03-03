@@ -19,8 +19,6 @@
 
 package org.jodconverter.local.filter.text;
 
-import java.util.Objects;
-
 import com.sun.star.beans.XPropertySet;
 import com.sun.star.container.XNameAccess;
 import com.sun.star.container.XNameContainer;
@@ -67,10 +65,10 @@ public class PageMarginsFilter implements Filter {
    *     does not change.
    */
   public PageMarginsFilter(
-      @Nullable final Integer leftMargin,
-      @Nullable final Integer topMargin,
-      @Nullable final Integer rightMargin,
-      @Nullable final Integer bottomMargin) {
+      final @Nullable Integer leftMargin,
+      final @Nullable Integer topMargin,
+      final @Nullable Integer rightMargin,
+      final @Nullable Integer bottomMargin) {
     super();
 
     this.leftMargin = leftMargin;
@@ -81,30 +79,25 @@ public class PageMarginsFilter implements Filter {
 
   @Override
   public void doFilter(
-      @NonNull final OfficeContext context,
-      @NonNull final XComponent document,
-      @NonNull final FilterChain chain)
+      final @NonNull OfficeContext context,
+      final @NonNull XComponent document,
+      final @NonNull FilterChain chain)
       throws Exception {
-
-    LOGGER.debug("Applying the PageMarginsFilter");
 
     // This filter can only be used with text document
     if (Write.isText(document)) {
-      setMargins(document);
+      LOGGER.debug("Applying the PageMarginsFilter");
+      setMargins(Lo.qi(XTextDocument.class, document));
     }
 
     // Invoke the next filter in the chain
     chain.doFilter(context, document);
   }
 
-  private void setMargins(final XComponent document) throws Exception {
-
-    // Querying for the interface XTextDocument (text interface) on the XComponent
-    final XTextDocument docText = Write.getTextDoc(document);
-    Objects.requireNonNull(docText);
+  private void setMargins(final XTextDocument document) throws Exception {
 
     // Create a text cursor from the cells XText interface
-    final XTextCursor xTextCursor = docText.getText().createTextCursor();
+    final XTextCursor xTextCursor = document.getText().createTextCursor();
 
     // Get the property set of the cell's TextCursor
     final XPropertySet xTextCursorProps = Lo.qi(XPropertySet.class, xTextCursor);
@@ -113,7 +106,7 @@ public class PageMarginsFilter implements Filter {
     final String pageStyleName = xTextCursorProps.getPropertyValue("PageStyleName").toString();
 
     // Get the StyleFamiliesSupplier interface of the document
-    final XStyleFamiliesSupplier xSupplier = Lo.qi(XStyleFamiliesSupplier.class, docText);
+    final XStyleFamiliesSupplier xSupplier = Lo.qi(XStyleFamiliesSupplier.class, document);
 
     // Use the StyleFamiliesSupplier interface to get the XNameAccess interface of the
     // actual style families

@@ -20,82 +20,37 @@
 package org.jodconverter.local.office;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import org.jodconverter.core.office.AbstractRetryable;
-import org.jodconverter.core.office.OfficeException;
 import org.jodconverter.core.office.TemporaryException;
 
 /** Performs a connection to an office process. */
-public class ConnectRetryable extends AbstractRetryable<OfficeException> {
+public class ConnectRetryable extends AbstractRetryable<OfficeConnectionException> {
 
-  private static final Integer EXIT_CODE_81 = 81;
-  private static final Logger LOGGER = LoggerFactory.getLogger(ConnectRetryable.class);
-
-  private final OfficeProcess process;
   private final OfficeConnection connection;
-
-  /**
-   * Creates a new instance of the class for the specified connection.
-   *
-   * @param connection The office connection to connect.
-   */
-  public ConnectRetryable(@NonNull final OfficeConnection connection) {
-    this(connection, null);
-  }
 
   /**
    * Creates a new instance of the class for the specified process and connection.
    *
    * @param connection The office connection to connect.
-   * @param process The office process whose exit code is to be retrieved.
    */
-  public ConnectRetryable(
-      @NonNull final OfficeConnection connection, @Nullable final OfficeProcess process) {
+  public ConnectRetryable(final @NonNull OfficeConnection connection) {
     super();
 
-    this.process = process;
     this.connection = connection;
   }
 
   @Override
-  protected void attempt() throws TemporaryException, OfficeException {
+  protected void attempt() throws TemporaryException {
 
     try {
       // Try to connect
       connection.connect();
-      LOGGER.trace("An attempt to connect to an office process has succeeded");
 
     } catch (OfficeConnectionException ex) {
-      LOGGER.trace("An attempt to connect to an office process has failed", ex);
 
-      // If we cannot get the exit code of a process, just
-      // throw a TemporaryException
-      if (process == null || process.getProcess() == null) {
-        throw new TemporaryException(ex);
-      }
-
-      // Here, we can get the exit code of the process
-      final VerboseProcess verboseProcess = process.getProcess();
-      final Integer exitCode = verboseProcess == null ? null : verboseProcess.getExitCode();
-      if (exitCode == null) {
-
-        // Process is running; retry connect later
-        throw new TemporaryException(ex);
-
-      } else if (exitCode.equals(EXIT_CODE_81)) {
-
-        // Restart and retry later
-        // see http://code.google.com/p/jodconverter/issues/detail?id=84
-        LOGGER.warn("Office process died with exit code 81; restarting it");
-        process.start(true);
-        throw new TemporaryException(ex);
-
-      } else {
-        throw new OfficeException("Office process died with exit code " + exitCode, ex);
-      }
+      // Throw a TemporaryException
+      throw new TemporaryException(ex);
     }
   }
 }
